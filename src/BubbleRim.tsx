@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 /** A chain of small bubbles around the edge of its parent, each joined to the next, breathing slowly. */
-export default function BubbleRim({ seed = 1 }: { seed?: number }) {
+export default function BubbleRim({ seed = 1, round = false }: { seed?: number; round?: boolean }) {
   const ref = useRef<SVGSVGElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
 
@@ -19,9 +19,14 @@ export default function BubbleRim({ seed = 1 }: { seed?: number }) {
   const n = Math.max(12, Math.round(per / 30));
   const rand = mulberry(seed);
   const pts = Array.from({ length: n }, (_, i) => {
-    let d = (i / n) * per + rand() * 6; d %= per;
     let x: number, y: number;
-    if (d < W) { x = d; y = 0; } else if (d < W + H) { x = W; y = d - W; } else if (d < 2 * W + H) { x = 2 * W + H - d; y = H; } else { x = 0; y = per - d; }
+    if (round) { // a circle of beads around a round avatar
+      const a = (i / n) * Math.PI * 2 + rand() * 0.1;
+      x = W / 2 + Math.cos(a) * (W / 2 - 1); y = H / 2 + Math.sin(a) * (H / 2 - 1);
+    } else {
+      let d = (i / n) * per + rand() * 6; d %= per;
+      if (d < W) { x = d; y = 0; } else if (d < W + H) { x = W; y = d - W; } else if (d < 2 * W + H) { x = 2 * W + H - d; y = H; } else { x = 0; y = per - d; }
+    }
     return { x, y, r: 1.8 + rand() * 2.2, delay: rand() * 6, dur: 4 + rand() * 4 };
   });
   const path = pts.map((p, i) => `${i ? "L" : "M"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ") + " Z";

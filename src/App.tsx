@@ -9,39 +9,53 @@ export default function App() {
   const [drops, setDrops] = useState<Drop[]>([]);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
+  const [open, setOpen] = useState<Drop | null>(null);
+  const [adding, setAdding] = useState(false);
 
   useEffect(() => { api.list().then(setDrops).catch(e => setError(e.message)); }, []);
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(""), 3500); return () => clearTimeout(t); }, [toast]);
+  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === "Escape") { setOpen(null); setAdding(false); } }; addEventListener("keydown", k); return () => removeEventListener("keydown", k); }, []);
 
   if (!CONFIGURED) return <main className="center"><div className="card"><h1>Almost there</h1><p>Add <b>VITE_SUPABASE_URL</b> and <b>VITE_SUPABASE_PUBLISHABLE_KEY</b> in Railway → Variables, then redeploy.</p></div></main>;
 
+  const pics = drops.filter(d => d.kind === "image").length, vids = drops.length - pics;
   return (
     <main>
-      <header>
-        <div className="brand"><p className="eyebrow">Midnight Fusion</p><h1>Drops</h1></div>
-        <p className="lede">Pictures and videos from the shop. Watch them, take them, put up your own. What goes up stays up.</p>
+      <header className="profile">
+        <div className="avatar"><BubbleRim seed={7} round /><img src="/mf-seal.png" alt="" width={88} height={88} /></div>
+        <div className="id">
+          <h1>midnightfusion</h1>
+          <ul className="stats"><li><b>{drops.length}</b> drops</li><li><b>{pics}</b> pictures</li><li><b>{vids}</b> videos</li></ul>
+          <p className="bio"><b>Covered in bubbles. You're connected.</b><br />Pictures and videos from the shop. Watch them, take them, put up your own. What goes up stays up.</p>
+        </div>
+        <button className="btn plus" onClick={() => setAdding(a => !a)} aria-expanded={adding} aria-label="Put up your own">{adding ? "Close" : "+ Drop"}</button>
       </header>
 
-      <Uploader onDone={d => { setDrops(all => [d, ...all]); setToast(`${d.title || d.by} is up.`); }} />
-
+      {adding && <Uploader onDone={d => { setDrops(all => [d, ...all]); setAdding(false); setToast(`${d.title || d.by} is up.`); }} />}
       {error && <p className="err">{error}</p>}
+
       {drops.length === 0 ? <div className="empty">Nothing here yet. Be the first to drop something.</div> : (
-        <div className="grid">
+        <div className="tiles" role="list">
           {drops.map(d => (
-            <figure key={d.id} className={d.kind}>
-              <div className="plate">
-                <BubbleRim seed={d.id} />
-                {d.kind === "image" ? <img src={d.url} alt={d.title || d.by} loading="lazy" /> : d.url ? <video src={d.url} controls preload="metadata" playsInline /> : <span className="muted">video</span>}
-              </div>
-              <figcaption>
-                <div className="title">{d.title || <span className="muted">Untitled</span>}</div>
-                <div className="meta">{d.by} · {when(d.created_at)} · {fmt(d.bytes)}</div>
-                <div className="acts">
-                  <a className="btn" href={d.url} download target="_blank" rel="noopener">Download</a>
-                </div>
-              </figcaption>
-            </figure>
+            <button key={d.id} className={`tile ${d.kind}`} role="listitem" onClick={() => setOpen(d)} aria-label={`${d.title || "Untitled"} by ${d.by}`}>
+              <BubbleRim seed={d.id} />
+              {d.kind === "image" ? <img src={d.url} alt="" loading="lazy" /> : d.url ? <video src={d.url} muted playsInline preload="metadata" /> : <span className="novid" />}
+              {d.kind === "video" && <span className="play" aria-hidden="true">▶</span>}
+            </button>
           ))}
+        </div>
+      )}
+
+      {open && (
+        <div className="post" role="dialog" aria-modal="true" aria-label={open.title || "Drop"} onClick={e => { if (e.target === e.currentTarget) setOpen(null); }}>
+          <article>
+            <div className="media"><BubbleRim seed={open.id} />{open.kind === "image" ? <img src={open.url} alt={open.title || open.by} /> : open.url ? <video src={open.url} controls autoPlay playsInline /> : <span className="novid">video</span>}</div>
+            <div className="cap">
+              <div className="byline"><span className="dot" /><b>{open.by}</b><span className="muted">{when(open.created_at)} · {fmt(open.bytes)}</span></div>
+              {open.title && <p>{open.title}</p>}
+              <div className="acts"><a className="btn primary" href={open.url} download target="_blank" rel="noopener">Download</a><button className="btn" onClick={() => setOpen(null)}>Close</button></div>
+            </div>
+          </article>
         </div>
       )}
       {toast && <div className="toast" role="status">{toast}</div>}
