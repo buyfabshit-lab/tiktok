@@ -13,7 +13,7 @@ test("anyone can drop a picture and download it", async ({ page }) => {
   await expect(card).toBeVisible();
   await expect(card.getByText(/Ana ·/)).toBeVisible();
   await expect(card.getByRole("link", { name: "Download" })).toHaveAttribute("href", /^blob:|^data:/);
-  await expect(card.getByRole("button", { name: "Take down" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /take down|owner|sign in/i })).toHaveCount(0);
 });
 
 test("a stranger cannot drop a PDF or skip the name", async ({ page }) => {
@@ -22,17 +22,4 @@ test("a stranger cannot drop a PDF or skip the name", async ({ page }) => {
   await expect(page.getByText("Pictures and videos only.")).toBeVisible();
   await page.getByRole("button", { name: "Drop it" }).click();
   await expect(page.getByText("Pick a picture or a video first.")).toBeVisible();
-});
-
-test("the owner signs in and takes a drop down", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("button", { name: "Owner" }).click();
-  await page.getByLabel("Email").fill("justin@example.com");
-  await page.getByLabel("Password").fill("twelve-letters!");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  const first = page.locator("figure").first();
-  const title = await first.locator(".title").innerText();
-  await first.getByRole("button", { name: "Take down" }).click();
-  await expect(page.getByText("Taken down.")).toBeVisible();
-  await expect(page.locator("figure").filter({ hasText: title })).toHaveCount(0);
 });

@@ -11,15 +11,10 @@ export const MAX_BYTES = 500 * 1024 * 1024;           // 500 MB per file; the bu
 export const KINDS = ["image", "video"] as const;
 export type Kind = (typeof KINDS)[number];
 export type Drop = { id: number; kind: Kind; title: string; by: string; path: string; url: string; bytes: number; mime: string; created_at: string };
-export type Me = { email: string } | null;
 
 export interface Api {
-  me(): Promise<Me>;
-  signIn(email: string, password: string): Promise<void>;
-  signOut(): Promise<void>;
   list(): Promise<Drop[]>;
   upload(file: File, by: string, title: string, onProgress?: (pct: number) => void): Promise<Drop>;
-  takeDown(id: number): Promise<void>;
 }
 
 export function kindOf(mime: string): Kind | null {
@@ -46,9 +41,6 @@ function supabaseApi(): Api {
   const sb = new Proxy({} as ReturnType<typeof createClient>, { get: (_, p) => (client ??= createClient(url!, key!))[p as keyof ReturnType<typeof createClient>] });
   const bucket = "drops";
   return {
-    async me() { const { data } = await sb.auth.getUser(); return data.user ? { email: data.user.email ?? "" } : null; },
-    async signIn(email, password) { const { error } = await sb.auth.signInWithPassword({ email, password }); if (error) throw new Error(error.message); },
-    async signOut() { await sb.auth.signOut(); },
     async list() {
       const { data, error } = await sb.from("mf_drops").select("*").order("created_at", { ascending: false });
       if (error) throw new Error(error.message);
@@ -67,22 +59,14 @@ function supabaseApi(): Api {
       const row = data as Omit<Drop, "url">;
       return { ...row, url: sb.storage.from(bucket).getPublicUrl(path).data.publicUrl };
     },
-    async takeDown(id) {
-      const { data, error } = await sb.rpc("mf_take_down", { p_id: id });   // owner only; returns the path it removed
-      if (error) throw new Error(error.message);
-      if (data) await sb.storage.from(bucket).remove([data as string]);
-    },
   };
 }
 
 function demoApi(): Api {
-  let me: Me = null; let next = 3;
+  let next = 3;
   const seed = (id: number, kind: Kind, title: string, by: string, mime: string, bytes: number): Drop => ({ id, kind, title, by, path: `demo/${id}`, url: kind === "image" ? DEMO_PNG : DEMO_MP4, bytes, mime, created_at: new Date(Date.now() - id * 3600e3).toISOString() });
   const rows: Drop[] = [seed(1, "image", "Three Dogs, Helmet", "Justin", "image/png", 582733), seed(2, "video", "Collision reveal, take 4", "Justin", "video/mp4", 9_400_000)];
   return {
-    async me() { return me; },
-    async signIn(email, password) { if (password.length < 12) throw new Error("Password must be at least 12 characters"); me = { email }; },
-    async signOut() { me = null; },
     async list() { return rows.slice(); },
     async upload(file, by, title, onProgress) {
       const bad = checkFile(file) || checkText(by, title); if (bad) throw new Error(bad);
@@ -90,7 +74,6 @@ function demoApi(): Api {
       const d: Drop = { id: next++, kind: kindOf(file.type)!, title: title.trim(), by: by.trim(), path: `demo/${next}`, url: URL.createObjectURL(file), bytes: file.size, mime: file.type, created_at: new Date().toISOString() };
       rows.unshift(d); onProgress?.(100); return d;
     },
-    async takeDown(id) { if (!me) throw new Error("Only the owner can take a drop down"); const i = rows.findIndex(r => r.id === id); if (i >= 0) rows.splice(i, 1); },
   };
 }
 const DEMO_PNG = "/demo/three-dogs.png";   // a real owned mark, so the demo board is not blank

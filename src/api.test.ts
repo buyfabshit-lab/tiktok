@@ -24,14 +24,10 @@ describe("what may be dropped", () => {
 });
 
 describe("demo api", async () => {
-  process.env.VITE_DEMO = "1";
   const { api } = await import("./api");
-  it("lists newest first and only the owner can take down", async () => {
-    const before = await api.list();
-    expect(before.length).toBeGreaterThan(0);
-    await expect(api.takeDown(before[0].id)).rejects.toThrow(/owner/);
-    await api.signIn("justin@example.com", "twelve-letters!");
-    await api.takeDown(before[0].id);
-    expect((await api.list()).length).toBe(before.length - 1);
+  it("lists newest first and has no way to remove anything", async () => {
+    const rows = await api.list();
+    expect(rows.length).toBeGreaterThan(0);
+    expect("takeDown" in api).toBe(false);
   });
 });

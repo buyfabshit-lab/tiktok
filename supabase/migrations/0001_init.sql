@@ -1,6 +1,6 @@
 -- mf-drops · migration 0001
--- A public bucket for the files, one table for the rows. Anyone may read and add;
--- only a signed-in owner may take down. Every write goes through a checked function.
+-- A public bucket for the files, one table for the rows. Anyone may read and add.
+-- Nothing is ever deleted through the app: what goes up stays up. Writes go through a checked function.
 -- Keep each statement under ~5 KB if it ever goes through the hosted SQL tool.
 
 create table if not exists public.mf_drops (
@@ -36,20 +36,6 @@ end $$;
 revoke all on function public.mf_add_drop(text, text, text, text, bigint, text) from public;
 grant execute on function public.mf_add_drop(text, text, text, text, bigint, text) to anon, authenticated;
 
--- only a signed-in user (sign-ups are off, so that is the owner) may take a drop down
-create or replace function public.mf_take_down(p_id bigint)
-returns text
-language plpgsql security definer set search_path = public as $$
-declare p text;
-begin
-  if auth.uid() is null then raise exception 'only the owner can take a drop down'; end if;
-  delete from public.mf_drops where id = p_id returning path into p;
-  return p;
-end $$;
-
-revoke all on function public.mf_take_down(bigint) from public;
-grant execute on function public.mf_take_down(bigint) to authenticated;
-
 -- the bucket: public read, 500 MB per file, pictures and videos only
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('drops', 'drops', true, 524288000, array['image/png','image/jpeg','image/gif','image/webp','video/mp4','video/quicktime','video/webm'])
@@ -60,6 +46,3 @@ create policy "drops_public_read" on storage.objects
 
 create policy "drops_anyone_uploads" on storage.objects
   for insert to anon, authenticated with check (bucket_id = 'drops');
-
-create policy "drops_owner_removes" on storage.objects
-  for delete to authenticated using (bucket_id = 'drops');

@@ -1,35 +1,25 @@
 import { useEffect, useRef, useState } from "react";
-import { api, CONFIGURED, checkFile, checkText, type Drop, type Me } from "./api";
+import { api, CONFIGURED, checkFile, checkText, type Drop } from "./api";
 
 const fmt = (b: number) => b >= 1048576 ? `${(b / 1048576).toFixed(b >= 10485760 ? 0 : 1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`;
 const when = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 
 export default function App() {
-  const [me, setMe] = useState<Me | undefined>(undefined);
   const [drops, setDrops] = useState<Drop[]>([]);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
-  const [signIn, setSignIn] = useState(false);
 
-  useEffect(() => { api.me().then(setMe); }, []);
   useEffect(() => { api.list().then(setDrops).catch(e => setError(e.message)); }, []);
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(""), 3500); return () => clearTimeout(t); }, [toast]);
 
   if (!CONFIGURED) return <main className="center"><div className="card"><h1>Almost there</h1><p>Add <b>VITE_SUPABASE_URL</b> and <b>VITE_SUPABASE_PUBLISHABLE_KEY</b> in Railway → Variables, then redeploy.</p></div></main>;
 
-  const owner = Boolean(me);
   return (
     <main>
       <header>
         <div className="brand"><p className="eyebrow">Midnight Fusion</p><h1>Drops</h1></div>
-        <p className="lede">Pictures and videos from the shop. Take what you want. Put up your own.</p>
-        <div className="who">
-          {owner ? <><span>{me!.email}</span><button className="ghost" onClick={() => api.signOut().then(() => setMe(null))}>Sign out</button></>
-                 : <button className="ghost" onClick={() => setSignIn(s => !s)}>Owner</button>}
-        </div>
+        <p className="lede">Pictures and videos from the shop. Watch them, take them, put up your own. What goes up stays up.</p>
       </header>
-
-      {signIn && !owner && <SignIn onIn={async () => { setMe(await api.me()); setSignIn(false); }} />}
 
       <Uploader onDone={d => { setDrops(all => [d, ...all]); setToast(`${d.title || d.by} is up.`); }} />
 
@@ -46,7 +36,6 @@ export default function App() {
                 <div className="meta">{d.by} · {when(d.created_at)} · {fmt(d.bytes)}</div>
                 <div className="acts">
                   <a className="btn" href={d.url} download target="_blank" rel="noopener">Download</a>
-                  {owner && <button className="btn danger" onClick={async () => { try { await api.takeDown(d.id); setDrops(all => all.filter(x => x.id !== d.id)); setToast("Taken down."); } catch (e) { setError((e as Error).message); } }}>Take down</button>}
                 </div>
               </figcaption>
             </figure>
@@ -55,18 +44,6 @@ export default function App() {
       )}
       {toast && <div className="toast" role="status">{toast}</div>}
     </main>
-  );
-}
-
-function SignIn({ onIn }: { onIn: () => Promise<void> }) {
-  const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [msg, setMsg] = useState("");
-  return (
-    <form className="card signin" onSubmit={async e => { e.preventDefault(); setMsg(""); try { await api.signIn(email, password); await onIn(); } catch (err) { setMsg((err as Error).message); } }}>
-      <label>Email<input type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} required /></label>
-      <label>Password<input type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required /></label>
-      {msg && <p className="err">{msg}</p>}
-      <button type="submit">Sign in</button>
-    </form>
   );
 }
 

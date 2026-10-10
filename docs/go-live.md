@@ -8,11 +8,11 @@ github.com/new → name `mf-drops` → Private → Create repository. Then add i
 ## 2. Supabase project (**Justin creates or reconnects**, Claude applies)
 Either reconnect the Supabase connector in claude.ai so Claude can create the project and apply `supabase/migrations/0001_init.sql`, or on a PC: `supabase projects create mf-drops --region us-west-1`, then `supabase link` and `supabase db push`. Pro plan if videos will pass 1 GB.
 
-## 3. Auth switches (**Justin**, dashboard, five minutes)
-Supabase → mf-drops → Authentication: minimum password length **12** with letters and digits; leaked-password protection **on**; allow new users to sign up **off**. Then Authentication → Users → Add user: your email and a 12-character password. That login is the only one, and it is what Take down checks.
+## 3. No login (**nothing to do**)
+There is no sign-in anywhere. Leave Authentication alone; the app never calls it.
 
 ## 4. Railway (**Justin**, two clicks)
 New Project → Deploy from GitHub repo → `buyfabshit-lab/mf-drops`. Variables: `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` from Supabase → Settings → API. The page says "Almost there" until both are set.
 
 ## 5. Smoke (**Justin**, two minutes)
-Open the Railway URL. Drop a picture with your name. See it in the grid. Tap Download. Tap Owner, sign in, Take down. Share the link with one person and have them drop a video.
+Open the Railway URL. Drop a picture with your name. See it in the grid. Tap Download. Share the link with one person and have them drop a video.
