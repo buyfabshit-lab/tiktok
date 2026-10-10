@@ -76,7 +76,7 @@ function demoApi(): Api {
     },
   };
 }
-const DEMO_PNG = "/demo/three-dogs.png";   // a real owned mark, so the demo board is not blank
+const DEMO_PNG = `${import.meta.env.BASE_URL}demo/three-dogs.png`;   // a real owned mark, so the demo board is not blank
 const DEMO_MP4 = "";
 
 export const api: Api = DEMO ? demoApi() : supabaseApi();

@@ -22,7 +22,7 @@ export default function App() {
   return (
     <main>
       <header className="profile">
-        <div className="avatar"><BubbleRim seed={7} round /><img src="/mf-seal.png" alt="" width={88} height={88} /></div>
+        <div className="avatar"><BubbleRim seed={7} round /><img src={`${import.meta.env.BASE_URL}mf-seal.png`} alt="" width={88} height={88} /></div>
         <div className="id">
           <h1>midnightfusion</h1>
           <ul className="stats"><li><b>{drops.length}</b> drops</li><li><b>{pics}</b> pictures</li><li><b>{vids}</b> videos</li></ul>
