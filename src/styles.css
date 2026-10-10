@@ -32,7 +32,15 @@ progress { width: 100%; height: 6px; accent-color: var(--olive-hi); }
 .err { color: var(--blood-hi); margin: 0; font-size: 14px; }
 .grid { margin-top: 28px; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 22px; }
 figure { margin: 0; min-width: 0; background: var(--panel); border: 1px solid var(--edge); display: flex; flex-direction: column; }
-.plate { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: repeating-linear-gradient(135deg, #0e0e0c 0 7px, #111110 7px 14px); overflow: hidden; }
+.plate { position: relative; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: repeating-linear-gradient(135deg, #0e0e0c 0 7px, #111110 7px 14px); }
+figure { overflow: visible; }
+.grid { padding: 8px; }
+/* the bubble chain around each plate */
+.rim { position: absolute; pointer-events: none; overflow: visible; z-index: 1; }
+.rim-string { fill: none; stroke: rgba(154, 163, 119, .35); stroke-width: 1; }
+.rim-bubble { fill: #e7e2d4; fill-opacity: .45; stroke: rgba(154, 163, 119, .8); stroke-width: .8; animation: breathe 5s ease-in-out infinite; }
+@keyframes breathe { 0%, 100% { transform: scale(1); fill-opacity: .45; } 50% { transform: scale(1.45); fill-opacity: .9; } }
+@media (prefers-reduced-motion: reduce) { .rim-bubble { animation: none; } }
 .plate img, .plate video { max-width: 100%; max-height: 100%; width: auto; height: auto; display: block; }
 figure.video .plate video { width: 100%; }
 figcaption { padding: 12px 14px 14px; border-top: 1px solid var(--edge); display: grid; gap: 4px; }

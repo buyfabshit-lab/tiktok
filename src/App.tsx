@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api, CONFIGURED, checkFile, checkText, type Drop } from "./api";
+import BubbleRim from "./BubbleRim";
 
 const fmt = (b: number) => b >= 1048576 ? `${(b / 1048576).toFixed(b >= 10485760 ? 0 : 1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`;
 const when = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
@@ -29,6 +30,7 @@ export default function App() {
           {drops.map(d => (
             <figure key={d.id} className={d.kind}>
               <div className="plate">
+                <BubbleRim seed={d.id} />
                 {d.kind === "image" ? <img src={d.url} alt={d.title || d.by} loading="lazy" /> : d.url ? <video src={d.url} controls preload="metadata" playsInline /> : <span className="muted">video</span>}
               </div>
               <figcaption>
